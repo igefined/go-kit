@@ -11,3 +11,7 @@ update:
 .PHONY: test
 test:
 	gotestsum --format=testname -- ./... -tags=units
+
+.PHONY: lint
+lint:
+	golangci-lint run

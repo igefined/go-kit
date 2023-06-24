@@ -2,29 +2,71 @@ package config
 
 import (
 	"context"
-	"log"
-	"time"
+	"encoding/hex"
+	"fmt"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/heetch/confita"
 	"github.com/heetch/confita/backend/env"
 )
 
-type BaseConfig struct {
-	Name  string `config:"APP_NAME"`
-	Port  uint   `config:"PORT"`
-	DBUrl string `config:"DB_URL,required"`
-}
+const (
+	defaultHttpPort = 8080
+	defaultAppName  = "app"
+	defaultEnv      = "DEV"
+)
 
-func NewBaseConfig(ctx context.Context) *BaseConfig {
-	cfgCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+type (
+	Application struct {
+		Name  string `config:"APP_NAME"`
+		Env   string `config:"APP_ENV"`
+		AppId string
 
-	cfg := &BaseConfig{}
-	loader := confita.NewLoader(env.NewBackend())
-	err := loader.Load(cfgCtx, cfg)
-	if err != nil {
-		log.Fatal("config has not loaded")
+		*DB
+		*Http
 	}
 
-	return cfg
+	Http struct {
+		Port uint `config:"HTTP_PORT"`
+	}
+
+	DB struct {
+		URL                string `config:"DB_URL"`
+		AutoCreateDatabase bool   `config:"DB_AUTO_CREATE_DATABASE"`
+	}
+)
+
+func New(ctx context.Context, other ...interface{}) (*Application, error) {
+	cfg := Application{
+		Name: defaultAppName,
+		Env:  defaultEnv,
+	}
+
+	for _, otherCfg := range other {
+		switch v := otherCfg.(type) {
+		case *Http:
+			if v.Port == 0 {
+				v.Port = defaultHttpPort
+			}
+			cfg.Http = v
+		case *DB:
+			cfg.DB = v
+		default:
+			return nil, fmt.Errorf("failed to load config, %T is not undefined type", otherCfg)
+		}
+	}
+
+	err := confita.NewLoader(env.NewBackend()).Load(ctx, &cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %s", err)
+	}
+
+	cfg.AppId = CreateAppID(cfg.Name)
+
+	return &cfg, nil
+}
+
+func CreateAppID(prefix string) string {
+	return fmt.Sprintf("%s-%s", strings.ToLower(prefix), hex.EncodeToString(uuid.NodeID()))
 }
