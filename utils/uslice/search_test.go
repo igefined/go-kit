@@ -1,5 +1,5 @@
 // go:build units
-package slice
+package uslice
 
 import (
 	"math/rand"
@@ -16,11 +16,11 @@ func TestSearch(t *testing.T) {
 		for i := 0; i < tLen; i++ {
 			nums[i] = i + 1
 		}
-		
+
 		desired := rand.Intn(tLen)
 		index := Search(nums, desired)
 
-		assert.Equal(t, desired - 1, index)
+		assert.Equal(t, desired-1, index)
 	})
 
 	t.Run("unsuccess search test", func(t *testing.T) {
@@ -28,7 +28,7 @@ func TestSearch(t *testing.T) {
 		for i := 0; i < tLen; i++ {
 			nums[i] = i + 1
 		}
-		
+
 		desired := 1_234_5678
 		index := Search(nums, desired)
 

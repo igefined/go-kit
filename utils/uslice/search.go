@@ -1,7 +1,7 @@
-package slice
+package uslice
 
-type Number interface{
-	int|int64|uint64|float64|float32
+type Number interface {
+	int | int64 | uint64 | float64 | float32
 }
 
 func Search[T Number](nums []T, elem T) int {

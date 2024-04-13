@@ -1,5 +1,5 @@
 // go:build units
-package slice
+package uslice
 
 import (
 	"testing"

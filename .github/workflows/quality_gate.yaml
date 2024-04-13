@@ -1,0 +1,46 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [ "*" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: Update
+        run: make update
+
+      - name: Lint
+        run: make lint
+
+      - name: Test
+        run: make test
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: install goveralls
+        run: go install github.com/mattn/goveralls@latest
+
+      - name: test
+        run: make test
+
+      - name: send coverage
+        run: goveralls -coverprofile=.cover -service=github
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
