@@ -10,9 +10,11 @@ import (
 )
 
 func TestNewEnvVar(t *testing.T) {
-	flag := "test_flag"
-	env := "test_env"
-	description := "test description"
+	var (
+		flag        = "test_flag"
+		env         = "test_env"
+		description = "test description"
+	)
 
 	t.Run("string default", func(t *testing.T) {
 		defaultValue := "test_default_value"
@@ -53,6 +55,12 @@ func TestAddEnvs(t *testing.T) {
 			DefaultValue: "default_value_2",
 			Description:  "Custom environment variable 2",
 		},
+		{
+			DefaultValue: defaultNamespace,
+			Flag:         "namespace",
+			Env:          "NAMESPACE",
+			Description:  "Service namespace",
+		},
 	}
 
 	AddEnvs(customEnvs)
@@ -80,32 +88,43 @@ func TestAddEnvs(t *testing.T) {
 }
 
 func TestBindConfig(t *testing.T) {
-	oldArgs := os.Args
-	t.Cleanup(func() {
-		os.Args = oldArgs
-		envs = nil
+	t.Run("success", func(t *testing.T) {
+		envs = append(envs, NewEnvVar(
+			"namespace",
+			"NAMESPACE",
+			struct{}{},
+			"Service namespace",
+		))
+
+		oldArgs := os.Args
+		t.Cleanup(func() {
+			os.Args = oldArgs
+			envs = nil
+		})
+
+		testArgs := []string{
+			"--host=test_host",
+			"--port=8080",
+			"--monitor_host=test_monitor_host",
+			"--custom_flag=test_value",
+			"--custom_flag_struct={}",
+		}
+
+		os.Args = append([]string{"cmd"}, testArgs...)
+
+		pflag.String("host", "", "nftique host")
+		pflag.String("port", "", "nftique port")
+		pflag.String("monitor_host", "", "nftique monitor port")
+		pflag.String("custom_flag", "", "Custom flag")
+		pflag.String("custom_flag_struct", "", "Custom flag struct")
+
+		BindConfig()
+
+		assert.Equal(t, "test_host", viper.GetString("HOST"))
+		assert.Equal(t, "8080", viper.GetString("PORT"))
+		assert.Equal(t, "test_monitor_host", viper.GetString("MONITOR_HOST"))
+		assert.Equal(t, "test_value", viper.GetString("CUSTOM_FLAG"))
 	})
-
-	testArgs := []string{
-		"--host=test_host",
-		"--port=8080",
-		"--monitor_host=test_monitor_host",
-		"--custom_flag=test_value",
-	}
-
-	os.Args = append([]string{"cmd"}, testArgs...)
-
-	pflag.String("host", "", "nftique host")
-	pflag.String("port", "", "nftique port")
-	pflag.String("monitor_host", "", "nftique monitor port")
-	pflag.String("custom_flag", "", "Custom flag")
-
-	BindConfig()
-
-	assert.Equal(t, "test_host", viper.GetString("HOST"))
-	assert.Equal(t, "8080", viper.GetString("PORT"))
-	assert.Equal(t, "test_monitor_host", viper.GetString("MONITOR_HOST"))
-	assert.Equal(t, "test_value", viper.GetString("CUSTOM_FLAG"))
 }
 
 func TestGetConfig(t *testing.T) {
@@ -130,16 +149,29 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestGetDatabaseName(t *testing.T) {
-	const (
-		url    = "postgres://postgres:postgres@localhost:5466/test_clients?sslmode=disable"
-		expect = "test_clients"
-	)
-
-	cfg := DBCfg{
-		URL: url,
+	testCases := []struct {
+		name     string
+		url      string
+		expected string
+	}{
+		{
+			name:     "invalid database url",
+			url:      "invalid_url",
+			expected: "",
+		},
+		{
+			name:     "valid database url",
+			url:      "postgres://postgres:postgres@localhost:5466/test_clients?sslmode=disable",
+			expected: "test_clients",
+		},
 	}
 
-	assert.Equal(t, cfg.GetDatabaseName(), expect)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := DBCfg{URL: tc.url}
+			assert.Equal(t, cfg.GetDatabaseName(), tc.expected)
+		})
+	}
 }
 
 func TestGetDatabaseUser(t *testing.T) {
@@ -158,6 +190,10 @@ func TestGetDatabaseUser(t *testing.T) {
 		{
 			url:      "postgres://docker:12345@localhost:5432/common?sslmode=disable&pool_max_conns=16&pool_max_conn_idle_time=30m&pool_max_conn_lifetime=1h&pool_health_check_period=1m", //nolint:lll
 			expected: "docker",
+		},
+		{
+			url:      "invalid_url",
+			expected: "",
 		},
 	}
 
@@ -186,6 +222,10 @@ func TestGetDatabasePassword(t *testing.T) {
 			url:      "postgres://docker:pass@localhost:5432/common?sslmode=disable&pool_max_conns=16&pool_max_conn_idle_time=30m&pool_max_conn_lifetime=1h&pool_health_check_period=1m", //nolint:lll
 			expected: "pass",
 		},
+		{
+			url:      "invalid_url",
+			expected: "",
+		},
 	}
 
 	for _, c := range tCases {
@@ -212,6 +252,14 @@ func TestGetDatabasePort(t *testing.T) {
 		{
 			url:      "postgres://docker:pass@localhost:9090/common?sslmode=disable&pool_max_conns=16&pool_max_conn_idle_time=30m&pool_max_conn_lifetime=1h&pool_health_check_period=1m", //nolint:lll
 			expected: "9090",
+		},
+		{
+			url:      "invalid_url",
+			expected: "",
+		},
+		{
+			url:      "https://www.percent-off.com/_20_%+off_60000_",
+			expected: "",
 		},
 	}
 

@@ -193,8 +193,6 @@ func BindConfig() {
 			flag.Int(e.Flag, val, e.Description)
 		case bool:
 			flag.Bool(e.Flag, val, e.Description)
-		case uint64:
-			flag.Uint64(e.Flag, val, e.Description)
 		case time.Duration:
 			flag.Duration(e.Flag, val, e.Description)
 		default:
@@ -207,16 +205,10 @@ func BindConfig() {
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
-	if err := viper.BindPFlags(pflag.CommandLine); err != nil {
-		panic(err)
-	}
+	_ = viper.BindPFlags(pflag.CommandLine)
 
-	var err error
 	for _, e := range envs {
-		err = viper.BindEnv(e.Env)
-		if err != nil {
-			panic(err)
-		}
+		_ = viper.BindEnv(e.Env)
 	}
 }
 
