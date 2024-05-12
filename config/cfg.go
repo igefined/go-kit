@@ -111,6 +111,11 @@ type (
 	S3 struct {
 		S3BucketName string `mapstructure:"s3_bucket_name"`
 	}
+
+	TraceCfg struct {
+		TracingServiceName  string `mapstructure:"tracing_service_name"`
+		TracingCollectorURI string `mapstructure:"tracing_collector_uri"`
+	}
 )
 
 func (c *DBCfg) GetDatabaseName() string {
