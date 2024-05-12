@@ -13,7 +13,7 @@ import (
 var Module = fx.Options(
 	fx.WithLogger(func(logger *zap.SugaredLogger) fxevent.Logger { return &fxevent.ZapLogger{Logger: logger.Desugar()} }),
 	fx.Provide(
-		func(ls fx.Lifecycle) (*zap.Logger, error) {
+		func(ls fx.Lifecycle) (*Logger, error) {
 			logLevel := zapcore.InfoLevel
 			logLevelStr := os.Getenv("LOG_LEVEL")
 			if logLevelStr != "" {

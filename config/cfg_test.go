@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const prefix = "test"
+
 func TestNewEnvVar(t *testing.T) {
 	var (
 		flag        = "test_flag"
@@ -118,7 +120,7 @@ func TestBindConfig(t *testing.T) {
 		pflag.String("custom_flag", "", "Custom flag")
 		pflag.String("custom_flag_struct", "", "Custom flag struct")
 
-		BindConfig()
+		BindConfig(prefix)
 
 		assert.Equal(t, "test_host", viper.GetString("HOST"))
 		assert.Equal(t, "8080", viper.GetString("PORT"))
@@ -138,10 +140,10 @@ func TestGetConfig(t *testing.T) {
 	}
 
 	var expectedPort = "9090"
-	_ = os.Setenv("MONITOR_PORT", expectedPort)
+	_ = os.Setenv("TEST_MONITOR_PORT", expectedPort)
 
 	var c C
-	err := GetConfig(&c, testVars)
+	err := GetConfig(prefix, &c, testVars)
 	assert.NoError(t, err)
 
 	assert.Equal(t, c.MonitorPort, expectedPort)

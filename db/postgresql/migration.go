@@ -9,12 +9,13 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/igefined/go-kit/config"
-
 	"go.uber.org/zap"
+
+	"github.com/igefined/go-kit/config"
+	"github.com/igefined/go-kit/log"
 )
 
-func Migrate(logger *zap.Logger, fs *embed.FS, cfg *config.DBCfg) error {
+func Migrate(logger *log.Logger, fs *embed.FS, cfg *config.DBCfg) error {
 	source, err := iofs.New(fs, "files")
 	if err != nil {
 		return err
