@@ -1,9 +1,18 @@
 package postgresql
 
 import (
+	"context"
+	"embed"
 	"testing"
+	"time"
 
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
+	"github.com/igefined/go-kit/config"
+	"github.com/igefined/go-kit/log"
+	"github.com/igefined/go-kit/test"
 )
 
 func TestMakeMigrateUrl(t *testing.T) {
@@ -35,4 +44,67 @@ func TestMakeMigrateUrl(t *testing.T) {
 			assert.Equal(t, c.result, migrateUrl)
 		})
 	}
+}
+
+func TestMigrate(t *testing.T) {
+	t.Run("invalid embed fs", func(t *testing.T) {
+		logger, err := log.NewLogger(zap.DebugLevel)
+		assert.NoError(t, err)
+
+		cfg := &config.DBCfg{}
+
+		err = Migrate(logger, &embed.FS{}, cfg)
+		assert.ErrorContains(t, err, "file does not exist")
+	})
+
+	t.Run("error create source instance", func(t *testing.T) {
+		logger, err := log.NewLogger(zap.DebugLevel)
+		assert.NoError(t, err)
+
+		cfg := &config.DBCfg{URL: "invalid_db_url"}
+
+		err = Migrate(logger, &db, cfg)
+		assert.ErrorContains(t, err, "no scheme")
+	})
+
+	t.Run("the schema not changed", func(t *testing.T) {
+		logger, err := log.NewLogger(zap.DebugLevel)
+		assert.NoError(t, err)
+
+		var cfg = &config.DBCfg{
+			URL: "postgres://postgres:postgres@localhost:5433/postgres?sslmode=disable",
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+
+		container, err := test.NewPostgresContainer(ctx, cfg, &test.Opt{Enabled: true, Image: defaultPostgresImage})
+		assert.NoError(t, err)
+		assert.NotNil(t, container)
+
+		err = Migrate(logger, &db, cfg)
+		assert.NoError(t, err, err)
+
+		err = Migrate(logger, &db, cfg)
+		assert.ErrorIs(t, err, migrate.ErrNoChange)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		logger, err := log.NewLogger(zap.DebugLevel)
+		assert.NoError(t, err)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+
+		var cfg = &config.DBCfg{
+			URL: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+		}
+
+		container, err := test.NewPostgresContainer(ctx, cfg, &test.Opt{Enabled: true, Image: defaultPostgresImage})
+		assert.NoError(t, err)
+		assert.NotNil(t, container)
+
+		err = Migrate(logger, &db, cfg)
+		assert.NoError(t, err)
+	})
 }

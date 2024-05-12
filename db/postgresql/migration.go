@@ -36,7 +36,7 @@ func Migrate(logger *zap.Logger, fs *embed.FS, cfg *config.DBCfg) error {
 		logger.Error("Could not apply the migration schema: %s", zap.Error(err))
 	}
 
-	return nil
+	return err
 }
 
 func makeMigrateUrl(dbUrl string) string {
