@@ -6,18 +6,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/igefined/go-kit/config"
-	"github.com/igefined/go-kit/log"
-	"github.com/igefined/go-kit/test"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+
+	"github.com/igefined/go-kit/config"
+	"github.com/igefined/go-kit/log"
+	"github.com/igefined/go-kit/test"
 )
 
-const defaultImage = "localstack/localstack:1.4.0"
+const (
+	defaultImage = "localstack/localstack:1.4.0"
+
+	prefix = "test"
+)
 
 type Suite struct {
 	suite.Suite
@@ -25,7 +29,7 @@ type Suite struct {
 
 	s3Cfg     *config.S3
 	awsCfg    *config.AWSCfg
-	logger    *zap.Logger
+	logger    *log.Logger
 	container *test.S3Container
 
 	client S3
@@ -49,7 +53,7 @@ func (s *Suite) SetupSuite() {
 	}
 
 	var cfg *testConfig
-	s.Require().NoError(config.GetConfig(&cfg, []*config.EnvVar{}))
+	s.Require().NoError(config.GetConfig(prefix, &cfg, []*config.EnvVar{}))
 	s.Require().NotEmpty(cfg.S3BucketName)
 
 	s.logger = logger

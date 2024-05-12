@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/igefined/go-kit/config"
+	"github.com/igefined/go-kit/log"
 )
 
 const checkingSql = `select exists(select datname from pg_catalog.pg_database where datname = $1) as exist`
@@ -19,10 +20,10 @@ const checkingSql = `select exists(select datname from pg_catalog.pg_database wh
 type QBuilder struct {
 	pool *pgxpool.Pool
 
-	logger *zap.Logger
+	logger *log.Logger
 }
 
-func New(log *zap.Logger, cfg *config.DBCfg, lc fx.Lifecycle) *QBuilder {
+func New(log *log.Logger, cfg *config.DBCfg, lc fx.Lifecycle) *QBuilder {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -60,7 +61,7 @@ func New(log *zap.Logger, cfg *config.DBCfg, lc fx.Lifecycle) *QBuilder {
 	return &QBuilder{conn, log}
 }
 
-func CreateDatabase(ctx context.Context, log *zap.Logger, cfg *config.DBCfg) {
+func CreateDatabase(ctx context.Context, log *log.Logger, cfg *config.DBCfg) {
 	dbName := cfg.GetDatabaseName()
 	conn, err := pgxpool.New(ctx, ReplaceDbName(cfg.URL, "postgres"))
 	if err != nil {

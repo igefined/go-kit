@@ -9,9 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.uber.org/zap"
-
 	cfg "github.com/igefined/go-kit/config"
+	"github.com/igefined/go-kit/log"
 )
 
 //go:generate mockgen -source=client.go -package=mocks -destination=./mocks/mock_s3.go S3
@@ -23,7 +22,7 @@ type S3 interface {
 }
 
 type Client struct {
-	logger *zap.Logger
+	logger *log.Logger
 
 	awsCfg   *cfg.AWSCfg
 	client   *s3.Client
@@ -33,7 +32,7 @@ type Client struct {
 }
 
 //nolint:ireturn
-func New(logger *zap.Logger, awsCfg *cfg.AWSCfg, opts ...Opt) (*Client, error) {
+func New(logger *log.Logger, awsCfg *cfg.AWSCfg, opts ...Opt) (*Client, error) {
 	options, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(awsCfg.AWSRegion),
 		config.WithCredentialsProvider(

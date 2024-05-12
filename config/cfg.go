@@ -116,6 +116,16 @@ type (
 		TracingServiceName  string `mapstructure:"tracing_service_name"`
 		TracingCollectorURI string `mapstructure:"tracing_collector_uri"`
 	}
+
+	LoggingConfig struct {
+		LogLevel                 string `mapstructure:"log_level"`
+		LogOutputPath            string `mapstructure:"log_output_path"`
+		LogErrorOutputPath       string `mapstructure:"log_error_output_path"`
+		DeveloperLoggerEncoder   bool   `mapstructure:"developer_logger_encoder"`
+		LoggerSamplingInitial    int    `mapstructure:"log_sampling_initial"`
+		LoggerSamplingThereafter int    `mapstructure:"log_sampling_thereafter"`
+		LogReplaceGlobal         bool   `mapstructure:"log_replace_global"`
+	}
 )
 
 func (c *DBCfg) GetDatabaseName() string {
@@ -189,7 +199,7 @@ func AddEnvs(customEnvs []*EnvVar) {
 	envs = tmpEnvs
 }
 
-func BindConfig() {
+func BindConfig(prefix string) {
 	for _, e := range envs {
 		switch val := e.DefaultValue.(type) {
 		case string:
@@ -212,13 +222,14 @@ func BindConfig() {
 	pflag.Parse()
 	_ = viper.BindPFlags(pflag.CommandLine)
 
+	viper.SetEnvPrefix(prefix)
 	for _, e := range envs {
 		_ = viper.BindEnv(e.Env)
 	}
 }
 
-func GetConfig(cfg interface{}, customEnvs []*EnvVar) error {
+func GetConfig(prefix string, cfg interface{}, customEnvs []*EnvVar) error {
 	AddEnvs(customEnvs)
-	BindConfig()
+	BindConfig(prefix)
 	return viper.Unmarshal(cfg)
 }

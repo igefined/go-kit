@@ -17,14 +17,18 @@ import (
 	"github.com/igefined/go-kit/test"
 )
 
-const defaultPostgresImage = "postgres:15.3-alpine"
+const (
+	defaultPostgresImage = "postgres:15.3-alpine"
+
+	prefix = "test"
+)
 
 type Suite struct {
 	suite.Suite
 	ctx context.Context
 
 	cfg       *config.DBCfg
-	logger    *zap.Logger
+	logger    *log.Logger
 	container *test.PostgresContainer
 }
 
@@ -45,7 +49,7 @@ func (s *Suite) SetupSuite() {
 	}
 
 	var cfg *testConfig
-	s.Require().NoError(config.GetConfig(&cfg, []*config.EnvVar{}))
+	s.Require().NoError(config.GetConfig(prefix, &cfg, []*config.EnvVar{}))
 	s.Require().NotEmpty(cfg.URL)
 
 	s.logger = logger
