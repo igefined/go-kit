@@ -140,7 +140,7 @@ func TestGetConfig(t *testing.T) {
 	}
 
 	var expectedPort = "9090"
-	_ = os.Setenv("TEST_	MONITOR_PORT", expectedPort)
+	_ = os.Setenv("TEST_MONITOR_PORT", expectedPort)
 
 	var c C
 	err := GetConfig(prefix, &c, testVars)
