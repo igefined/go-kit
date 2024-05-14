@@ -1,3 +1,5 @@
+//go:build units
+
 package uslice
 
 import (
