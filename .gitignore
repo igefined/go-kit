@@ -3,4 +3,5 @@
 bin
 
 .cover
+.cover.tmp
 coverage.html

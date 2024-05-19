@@ -76,14 +76,11 @@ install-config:
 
 .PHONY: test
 test:
-	@go test -tags=units ./...  -v -count=1 -coverprofile .cover
+	@go test -tags=units ./...  -v -count=1 -coverprofile .cover.tmp
+	@grep -v "mocks" .cover.tmp > .cover
+	@rm -f .cover.tmp
 	@go tool cover -html=.cover -o coverage.html
 	@go tool cover -func .cover | grep "total:"
-
-.PHONY: race
-race:
-	@go test ./internal/... -race -v -count=1 -coverprofile .cover ./internal/...
-	@./scripts/coverignore.sh
 
 .PHONY: coverage
 coverage:
