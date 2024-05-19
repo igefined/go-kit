@@ -8,8 +8,10 @@ import (
 	"syscall"
 )
 
-var ctx context.Context
-var once sync.Once
+var (
+	ctx  context.Context
+	once sync.Once
+)
 
 // SigTermIntCtx returns context which cancels by SIGTERM or SIGINT
 func SigTermIntCtx() context.Context {
