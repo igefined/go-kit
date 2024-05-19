@@ -222,7 +222,10 @@ func BindConfig(prefix string) {
 	pflag.Parse()
 	_ = viper.BindPFlags(pflag.CommandLine)
 
-	viper.SetEnvPrefix(prefix)
+	if prefix != "" {
+		viper.SetEnvPrefix(prefix)
+	}
+
 	for _, e := range envs {
 		_ = viper.BindEnv(e.Env)
 	}

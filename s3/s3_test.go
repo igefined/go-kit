@@ -21,7 +21,7 @@ func (s *Suite) TestStore() {
 
 func (s *Suite) TestDelete() {
 	var (
-		number    = rand.Intn(10)
+		number    = generateNumber(10)
 		filenames = make([]string, number)
 	)
 
@@ -93,4 +93,13 @@ func (s *Suite) randomBytes() []byte {
 	s.Require().NoError(err)
 
 	return bytes
+}
+
+func generateNumber(max int) int {
+	number := rand.Intn(max)
+	if number < 2 {
+		generateNumber(max)
+	}
+
+	return number
 }
