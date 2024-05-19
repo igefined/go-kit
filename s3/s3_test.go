@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -19,11 +20,32 @@ func (s *Suite) TestStore() {
 }
 
 func (s *Suite) TestDelete() {
+	var (
+		number    = rand.Intn(10)
+		filenames = make([]string, number)
+	)
+
+	s.Run("not equal files", func() {
+		for i := 0; i < number; i++ {
+			filename := fmt.Sprintf("%s_%d", testFilename, i+1)
+
+			err := s.client.Store(s.ctx, filename, s.randomBytes())
+			s.Require().NoError(err)
+
+			filenames[i] = filename
+		}
+
+		err := s.client.Delete(s.ctx, filenames[:number-2])
+		s.Require().NoError(err)
+	})
+
 	s.Run("success", func() {
 		err := s.client.Store(s.ctx, testFilename, s.randomBytes())
 		s.Require().NoError(err)
 
-		err = s.client.Delete(s.ctx, []string{testFilename})
+		filenames = append(filenames, testFilename)
+
+		err = s.client.Delete(s.ctx, filenames)
 		s.Require().NoError(err)
 	})
 }
@@ -42,7 +64,7 @@ func (s *Suite) TestList() {
 		var (
 			err          error
 			number       = rand.Intn(10)
-			filesToStore = make([]string, 0, number)
+			filesToStore = make([]string, 0, number+1)
 		)
 
 		for i := 0; i < number; i++ {
@@ -53,6 +75,8 @@ func (s *Suite) TestList() {
 			err = s.client.Store(context.Background(), filename, content)
 			s.Require().NoError(err)
 		}
+
+		filesToStore = append(filesToStore, strconv.Itoa(number+1))
 
 		medias, err := s.client.List(ctx)
 		s.Require().NoError(err)
